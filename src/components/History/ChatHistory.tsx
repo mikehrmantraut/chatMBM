@@ -1,4 +1,3 @@
-import React from 'react'
 import { MessageCircle, Trash2, Calendar } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { ChatSession } from '../../types'

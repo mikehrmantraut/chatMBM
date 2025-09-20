@@ -13,6 +13,7 @@ type AppAction =
   | { type: 'SET_SESSIONS'; payload: ChatSession[] }
   | { type: 'SET_CURRENT_SESSION'; payload: ChatSession | null }
   | { type: 'ADD_MESSAGE'; payload: { sessionId: string; message: Message } }
+  | { type: 'DELETE_MESSAGE'; payload: { sessionId: string; messageId: string } }
   | { type: 'CREATE_SESSION'; payload: ChatSession }
   | { type: 'DELETE_SESSION'; payload: string }
   | { type: 'UPDATE_SESSION_TITLE'; payload: { sessionId: string; title: string } }
@@ -62,6 +63,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
           ? {
               ...state.currentSession,
               messages: [...state.currentSession.messages, action.payload.message],
+              updatedAt: new Date(),
+            }
+          : state.currentSession,
+      }
+    
+    case 'DELETE_MESSAGE':
+      return {
+        ...state,
+        sessions: state.sessions.map(session =>
+          session.id === action.payload.sessionId
+            ? {
+                ...session,
+                messages: session.messages.filter(msg => msg.id !== action.payload.messageId),
+                updatedAt: new Date(),
+              }
+            : session
+        ),
+        currentSession: state.currentSession?.id === action.payload.sessionId
+          ? {
+              ...state.currentSession,
+              messages: state.currentSession.messages.filter(msg => msg.id !== action.payload.messageId),
               updatedAt: new Date(),
             }
           : state.currentSession,
