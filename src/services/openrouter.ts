@@ -1,4 +1,5 @@
 import { AIModel, OpenRouterResponse } from '../types'
+import { trace, SpanStatusCode, SpanKind } from '@opentelemetry/api'
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1'
 const API_KEY = (import.meta as any).env.VITE_OPENROUTER_API_KEY
@@ -13,6 +14,11 @@ export class OpenRouterService {
       throw new Error('OpenRouter API key is required')
     }
 
+    const tracer = trace.getTracer((import.meta as any).env.VITE_OTEL_SERVICE_NAME || 'chatmbm')
+    const span = tracer.startSpan('openrouter.request', { kind: SpanKind.CLIENT })
+    span.setAttribute('http.method', (options.method || 'GET').toString())
+    span.setAttribute('http.url', `${OPENROUTER_API_URL}${endpoint}`)
+
     const response = await fetch(`${OPENROUTER_API_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -26,13 +32,19 @@ export class OpenRouterService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(
+      const message = (
         errorData.error?.message || 
         `API request failed with status ${response.status}`
-      )
+      ) as string
+      span.recordException({ name: 'OpenRouterError', message })
+      span.setStatus({ code: SpanStatusCode.ERROR, message })
+      span.end()
+      throw new Error(message)
     }
-
-    return response.json()
+    const json = await response.json()
+    span.setAttribute('http.status_code', response.status)
+    span.end()
+    return json
   }
 
   static async getModels(): Promise<AIModel[]> {
@@ -70,7 +82,7 @@ export class OpenRouterService {
   }
 
   static async sendMessage(
-    messages: Array<{ role: string; content: string }>,
+    messages: Array<{ role: string; content: string | any[] }>,
     model: string
   ): Promise<string> {
     try {
@@ -79,7 +91,7 @@ export class OpenRouterService {
         body: JSON.stringify({
           model,
           messages,
-          stream: false, // We'll implement streaming later
+          stream: false,
           temperature: 0.7,
           max_tokens: 1000,
         }),
@@ -99,7 +111,7 @@ export class OpenRouterService {
   }
 
   static async sendMessageStream(
-    messages: Array<{ role: string; content: string }>,
+    messages: Array<{ role: string; content: string | any[] }>,
     model: string,
     onChunk: (chunk: string) => void
   ): Promise<void> {

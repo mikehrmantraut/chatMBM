@@ -4,6 +4,7 @@ export interface Message {
   role: 'user' | 'assistant'
   timestamp: Date
   model?: string
+  imageUrl?: string
 }
 
 export interface ChatSession {
@@ -25,6 +26,7 @@ export interface AIModel {
     completion: string
   }
   isFree: boolean
+  supportsVision?: boolean
 }
 
 export interface OpenRouterResponse {

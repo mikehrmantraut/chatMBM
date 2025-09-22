@@ -6,18 +6,28 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Instrument Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#faf8f5',
+          100: '#f5f1eb',
+          200: '#e8ddd0',
+          300: '#d4c4b0',
+          400: '#b8a088',
+          500: '#9c7c60',
+          600: '#70645e',
+          700: '#5a4f4a',
+          800: '#4a403c',
+          900: '#3d3430',
+        },
+        warm: {
+          50: '#faf8f5',
+          100: '#f5f1eb',
+          200: '#e8ddd0',
+          300: '#d4c4b0',
+          400: '#b8a088',
         }
       }
     },
