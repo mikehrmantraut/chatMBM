@@ -1,112 +1,88 @@
-# ChatMBM - AI Sohbet Uygulaması
+# ChatMBM
 
-Modern web tabanlı AI sohbet uygulaması. OpenRouter API kullanarak çeşitli dil modelleriyle etkileşim kurun.
+Web tabanlı bir sohbet uygulaması geliştirdim. OpenRouter üzerinden farklı dil modellerine bağlanarak mesajlaşmayı sağlıyor. Uygulama React + TypeScript ile yazıldı, Vite ile derleniyor ve ön yüzde OpenTelemetry ile izleme (tracing) yapıyorum. Yerelde Jaeger ile trace’leri görüntüleyebiliyorum.
 
-## 🚀 Özellikler
+## Ne işe yarıyor?
 
-- 🤖 **Çoklu AI Model Desteği** - OpenRouter üzerinden çeşitli ücretsiz ve ücretli modellere erişim
-- 💬 **Gerçek Zamanlı Sohbet** - Akıcı mesajlaşma deneyimi
-- 📚 **Sohbet Geçmişi** - Konuşmalarınızı kaydedin ve yönetin
-- 🔧 **Model Seçimi** - İstediğiniz AI modelini seçin
-- 📊 **OpenTelemetry İzleme** - Performans ve kullanım analizi
-- 🎨 **Modern UI/UX** - Responsive ve kullanıcı dostu arayüz
+– Farklı AI modellerinden (OpenRouter) cevap alarak sohbet etmemi sağlıyor.
+– Sohbet oturumları ve geçmişini yönetiyorum.
+– İstek/yanıt süreleri ve hatalar için tarayıcı tarafında trace topluyorum (OpenTelemetry) ve Jaeger ile inceliyorum.
 
-## 🛠️ Teknolojiler
+## Teknik seçimler ve gerekçeler
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS
-- **API**: OpenRouter Gateway
-- **İzleme**: OpenTelemetry + Jaeger
-- **Icons**: Lucide React
+– React 18 + TypeScript + Vite: Hızlı geliştirme döngüsü, güçlü tip güvenliği ve modern build zinciri için tercih ettim.
+– Tailwind CSS: Bileşen bazlı, hızlı ve tutarlı stil oluşturmak için kullanıyorum.
+– OpenRouter API: Tek bir arayüz üzerinden çok sayıda model sağlayıcısına erişebildiğim için basit ve esnek.
+– OpenTelemetry (Web SDK) + OTLP/HTTP: Tarayıcıdan Collector’a standart OTLP/HTTP ile export ediyorum; Vite ortam değişkenleriyle uç noktayı kolayca yönetiyorum.
+– Jaeger (all-in-one): Yerel ortamda hızlı kurulum ve görselleştirme için ideal. Collector’dan Jaeger’a gRPC ile aktarıyorum.
+– CORS ve header politikası: Üçüncü parti origin’lere W3C trace header’larını göndermemek için `propagateTraceHeaderCorsUrls: []` kullanıyorum; bu sayede preflight/CORS sorunlarından kaçınıyorum. Collector tarafında `otel-collector-config.yaml` içinde OTLP HTTP için CORS açık.
 
-## 📋 Gereksinimler
+## Gereksinimler
 
-- Node.js 18+ 
-- npm veya yarn
-- OpenRouter API anahtarı
-- Docker (OpenTelemetry için)
+– Node.js 18+
+– npm
+– OpenRouter API anahtarı
+– Docker (Jaeger ve OpenTelemetry Collector için)
 
-## 🚀 Kurulum
+## Kurulum ve çalıştırma (yerel)
 
-1. **Projeyi klonlayın**
-   ```bash
-   git clone <repository-url>
-   cd chatmbm
-   ```
+1) Depoyu klonla
+```
+git clone <repository-url>
+cd chatmbm
+```
 
-2. **Bağımlılıkları yükleyin**
-   ```bash
-   npm install
-   ```
+2) Bağımlılıkları yükle
+```
+npm install
+```
 
-3. **Environment değişkenlerini ayarlayın**
-   ```bash
-   cp env.example .env
-   ```
-   
-   `.env` dosyasını düzenleyip OpenRouter API anahtarınızı ekleyin:
-   ```
-   VITE_OPENROUTER_API_KEY=your_api_key_here
-   VITE_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-   VITE_OTEL_SERVICE_NAME=chatmbm
-   ```
+3) Ortam değişkenlerini ayarla
+```
+copy env.example .env        # Windows PowerShell / CMD
+# cp env.example .env        # macOS/Linux
+```
+`.env` dosyasını düzenleyip anahtarı ekliyorum:
+```
+VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
+VITE_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+VITE_OTEL_SERVICE_NAME=chatmbm
+```
 
-4. **Geliştirme sunucusunu başlatın**
-   ```bash
-   npm run dev
-   ```
+4) Telemetri servislerini başlat (opsiyonel ama önerilir)
+```
+docker compose up -d
+# veya
+docker-compose up -d
+```
+– `otel-collector` 4317 (gRPC) ve 4318 (HTTP) portlarında OTLP alır.
+– `jaeger` arayüzü 16686 portundadır.
 
-5. **Tarayıcıda açın**
-   ```
-   http://localhost:3000
-   ```
+5) Geliştirme sunucusunu çalıştır
+```
+npm run dev
+```
+Tarayıcıdan `http://localhost:3000` adresine giriyorum.
 
-## 🔧 OpenTelemetry Kurulumu
+## Jaeger arayüzü ve trace görüntüleme
 
-Yerel geliştirme için Jaeger ile OpenTelemetry kullanmak istiyorsanız:
+– Jaeger UI: `http://localhost:16686`
+– Sol üstten Service alanında servis adını seçiyorum: `chatmbm` (veya `.env` içinde verdiğim `VITE_OTEL_SERVICE_NAME`).
+– Trace’leri listeledikten sonra zaman aralığına göre filtreleyip detaylara giriyorum.
+– Uygulama içinde özellikle `openrouter.request` gibi operasyon adlarıyla istekleri görebilirim. HTTP method, URL, durum kodu ve hata durumunda istisna bilgileri span üzerinde işlenir.
 
-1. **Docker Compose ile servisleri başlatın**
-   ```bash
-   docker-compose up -d
-   ```
+Veri akışı: Tarayıcı → OTLP/HTTP (`http://localhost:4318/v1/traces`) → OpenTelemetry Collector → Jaeger (gRPC 4317)
 
-2. **Jaeger UI'ya erişin**
-   ```
-   http://localhost:16686
-   ```
+Notlar:
+– Collector yapılandırması `otel-collector-config.yaml` dosyasındadır. CORS `http` alıcısında açık durumdadır.
+– Trace header’ları üçüncü taraf domain’lere enjekte edilmez; sadece tarayıcı tarafında span’lar oluşturulur ve Collector’a gönderilir.
 
-3. **OpenTelemetry Collector UI'ya erişin**
-   ```
-   http://localhost:8888
-   ```
+## Komutlar
 
-### Telemetri Özellikleri
+– Geliştirme: `npm run dev`
+– Üretim derlemesi: `npm run build`
+– Ön izleme: `npm run preview`
 
-- **Trace'ler**: API çağrıları, kullanıcı etkileşimleri
-- **Span'lar**: Mesaj gönderme, model seçimi, hata yönetimi
-- **Metrikler**: Token kullanımı, yanıt süreleri
-- **Event'ler**: Kullanıcı aksiyonları, sistem olayları
+## Lisans
 
-## 📝 Kullanım
-
-1. **Model Seçimi**: Ayarlar sekmesinden istediğiniz AI modelini seçin
-2. **Sohbet Başlatın**: Sohbet sekmesinde mesaj yazmaya başlayın
-3. **Geçmişi Görüntüleyin**: Tüm konuşmalarınızı geçmiş sekmesinde bulabilirsiniz
-
-## 🤝 Katkıda Bulunma
-
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Commit yapın (`git commit -m 'Add amazing feature'`)
-4. Push yapın (`git push origin feature/amazing-feature`)
-5. Pull Request oluşturun
-
-## 📄 Lisans
-
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
-
-## 🙏 Teşekkürler
-
-- [OpenRouter](https://openrouter.ai/) - AI model erişimi için
-- [OpenTelemetry](https://opentelemetry.io/) - Observability için
-- [React](https://reactjs.org/) - UI framework için
+Bu proje MIT lisansı ile lisanslıdır. Ayrıntılar için `LICENSE` dosyasına bakıyorum.
