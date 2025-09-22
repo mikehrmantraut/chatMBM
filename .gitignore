@@ -31,4 +31,4 @@ dist-ssr
 .env.production.local
 
 # OpenTelemetry
-otel-collector-config.yaml
+
