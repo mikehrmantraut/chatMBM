@@ -29,16 +29,13 @@ export function useOpenRouter() {
       const merged = [visionModel, ...models]
       dispatch({ type: 'SET_MODELS', payload: merged })
 
-      // Prefer a free model when selecting default
+      // Only set a default if no selection exists or the selection is unavailable
       if (merged.length > 0) {
-        const firstFree = merged.find(m => m.isFree)
-        const currentSelection = merged.find(m => m.id === selectedModel)
-        const shouldSelectFree = !selectedModel || !currentSelection || (!currentSelection.isFree && Boolean(firstFree))
-
-        if (shouldSelectFree && firstFree) {
-          dispatch({ type: 'SET_SELECTED_MODEL', payload: firstFree.id })
-        } else if (!selectedModel) {
-          dispatch({ type: 'SET_SELECTED_MODEL', payload: merged[0].id })
+        const selectionExists = Boolean(merged.find(m => m.id === selectedModel))
+        if (!selectedModel || !selectionExists) {
+          const firstFree = merged.find(m => m.isFree)
+          const fallback = firstFree?.id ?? merged[0].id
+          dispatch({ type: 'SET_SELECTED_MODEL', payload: fallback })
         }
       }
     } catch (error) {
